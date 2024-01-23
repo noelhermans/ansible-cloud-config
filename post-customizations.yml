@@ -1,0 +1,63 @@
+- hosts: localhost
+  gather_facts: true
+  vars_files:
+    - parameters.yaml
+  become_user: root
+
+  tasks:
+    - name: Enable Ubuntu autologin setting
+      become: true
+      lineinfile:
+        dest: /etc/gdm3/custom.conf
+        regexp: '^#?\s*AutomaticLoginEnable.*$'
+        line: "AutomaticLoginEnable = true"
+    - name: Enable Ubuntu autologin for user
+      become: true
+      lineinfile:
+        dest: /etc/gdm3/custom.conf
+        regexp: '^#?\s*AutomaticLogin.*$'
+        line: "AutomaticLogin = {{ user }}"
+    - name: Create script start-firefox.sh script using template start-firefox.j2
+      become: true
+      template:
+        src: "start-firefox.j2"
+        dest: "/usr/local/bin/start-firefox.sh"
+        mode: 0755
+    - name: Creating a service file for firefox startup
+      become: true
+      copy:
+       dest: /etc/systemd/system/firefox-startup.service
+       content: |
+         [Unit]
+         Description=Launch Firefox on two displays
+         After=graphical.target
+         StartLimitIntervalSec=0
+         [Service]
+         User={{ user }}
+         Type=simple
+         ExecStart=/usr/local/bin/start-firefox.sh
+         Restart=on-failure
+         RestartSec=20
+         [Install]
+         WantedBy=graphical.target
+    - name: Reload the SystemD to re-read configurations
+      become: true
+      systemd:
+         daemon-reload: yes
+    - name: Enable the firefox service
+      become: true
+      systemd:
+         name: firefox-startup
+         enabled: yes
+    - name: Update /etc/apt/sources.list with reposerver
+      become: true
+      register: client_configured
+      replace:
+        path: /etc/apt/sources.list
+        regexp: '(\s+){{ source }}(/ubuntu\s+.*)?$'
+        replace: '\1{{ reposerver }}\2'
+    - name: Updating apt-cache
+      apt:
+        update_cache: yes
+      become: true
+      when: client_configured['changed']

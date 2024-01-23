@@ -1,4 +1,4 @@
-Ansible cloud-init Example
+##Ansible cloud-init Example
 ==========================
 
 This repository exists to demonstrate using cloud-init and ansible
@@ -14,6 +14,7 @@ install-package.yml
 -------------------
 This playbook demonstrates I can install a package from cloud-init.
 
-Example Usage:
----------------
-blablabla
+## Ansible playbooks
+post-customizations.yml : all necessary post customizations
+parameters.yaml  : containing all parameters
+templates/start-firefox.j2 : start-firefox.sh template

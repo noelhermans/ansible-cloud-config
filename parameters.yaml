@@ -1,0 +1,6 @@
+---
+user: "ubuntu"
+first_display_resolution: "0,0,1920,1080"
+second_display_resolution: "1920,0,1920,1080"
+source: "http://archive.ubuntu.com"
+reposerver: "http://192.168.154.15"
