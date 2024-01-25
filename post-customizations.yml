@@ -19,7 +19,7 @@
         line: "AutomaticLogin = {{ user }}"
 # Remove snap from the Ubuntu image
     - name: Disable service snapd and ensure it is masked
-      become: true    
+      become: true
       ansible.builtin.systemd_service:
         name: snapd
         enabled: false
@@ -28,13 +28,27 @@
         - { name: "snapd.service" }
         - { name: "snapd.socket" }
         - { name: "snapd.seeded.service" }
+    - name: Unmounting firefox snap cache
+      become: true
+      ansible.builtin.command: umount /var/snap/firefox/common/host-hunspell
+      ignore_errors: true
+    - name: remove firefox snap
+      become: true
+      ansible.builtin.command: snap remove firefox
+      ignore_errors: true
+    - name: remove snap cache
+      become: true
+      ansible.builtin.command: rm -rf /var/cache/snapd/
+      ignore_errors: true
+    - name: remove snap package with purge
+      become: true
+      ansible.builtin.command: apt autoremove -y --purge snapd
+      ignore_errors: true
     - name: "Uninstall packages"
-      become: true    
+      become: true
       apt:
         name: snapd
         state: absent
-        autoremove: yes
-        purge: true
       ignore_errors: true
 # Install firefox via APT
     - name: Add firefox apt-add-repository
