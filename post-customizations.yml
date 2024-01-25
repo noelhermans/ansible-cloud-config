@@ -17,47 +17,51 @@
         dest: /etc/gdm3/custom.conf
         regexp: '^#?\s*AutomaticLogin.*$'
         line: "AutomaticLogin = {{ user }}"
-    - name: Create script start-firefox.sh script using template start-firefox.j2
+# Remove snap from the Ubuntu image
+    - name: Disable service snapd and ensure it is masked
+      become: true    
+      ansible.builtin.systemd_service:
+        name: snapd
+        enabled: false
+        masked: yes
+      with_items:
+        - { name: "snapd.service" }
+        - { name: "snapd.socket" }
+        - { name: "snapd.seeded.service" }
+    - name: "Uninstall packages"
+      become: true    
+      apt:
+        name: snapd
+        state: absent
+        autoremove: yes
+        purge: true
+      ignore_errors: true
+# Install firefox via APT
+    - name: Add firefox apt-add-repository
+      become: true    
+      apt_repository:
+        repo: "{{ item.repo }}"
+        state: "{{ item.state }}"
+      with_items:
+        - { state: "present", repo: "ppa:mozillateam/firefox-next" }
+    - name: apt install
       become: true
-      template:
-        src: "start-firefox.j2"
-        dest: "/usr/local/bin/start-firefox.sh"
-        mode: 0755
-    - name: Creating a service file for firefox startup
-      become: true
-      copy:
-       dest: /etc/systemd/system/firefox-startup.service
-       content: |
-         [Unit]
-         Description=Launch Firefox on two displays
-         After=graphical.target
-         StartLimitIntervalSec=0
-         [Service]
-         User={{ user }}
-         Type=simple
-         ExecStart=/usr/local/bin/start-firefox.sh
-         Restart=on-failure
-         RestartSec=20
-         [Install]
-         WantedBy=graphical.target
-    - name: Reload the SystemD to re-read configurations
-      become: true
-      systemd:
-         daemon-reload: yes
-    - name: Enable the firefox service
-      become: true
-      systemd:
-         name: firefox-startup
-         enabled: yes
+      apt:
+        name: "{{ item.name }}"
+        state: "{{ item.state }}"
+      with_items:
+        - { state: "latest", name: "firefox" }
+        - { state: "latest", name: "firefox-locale-en" }
+# Check if the following tasks is correct :
     - name: Update /etc/apt/sources.list with reposerver
       become: true
-      register: client_configured
       replace:
         path: /etc/apt/sources.list
-        regexp: '(\s+){{ source }}(/ubuntu\s+.*)?$'
-        replace: '\1{{ reposerver }}\2'
-    - name: Updating apt-cache
-      apt:
-        update_cache: yes
+        regexp: '(\s+){{ source }}/ubuntu/?(\s+.*)?$'
+        replace: '\1{{ reposerver }}/ubuntu/archive.ubuntu.com/ubuntu \2'
+    - name: Update security repos from /etc/apt/sources.list with reposerver
       become: true
-      when: client_configured['changed']
+      replace:
+        path: /etc/apt/sources.list
+        regexp: '(\s+){{ source_security }}/ubuntu/?(\s+.*)?$'
+        replace: '\1{{ reposerver }}/ubuntu/security.ubuntu.com/ubuntu \2'
