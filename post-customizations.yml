@@ -44,6 +44,10 @@
       become: true
       ansible.builtin.command: apt autoremove -y --purge snapd
       ignore_errors: true
+    - name: prevent snapd will be reinstalled
+      become: true
+      ansible.builtin.command: sudo apt-mark hold snapd
+      ignore_errors: true
     - name: "Uninstall packages"
       become: true
       apt:
@@ -51,8 +55,16 @@
         state: absent
       ignore_errors: true
 # Install firefox via APT
+    - name: Blocking install firefox via snap
+      become: true
+      copy:
+        dest: /etc/apt/preferences.d/firefox-no-snap
+        content: |
+          Package: firefox*
+          Pin: release o=Ubuntu*
+          Pin-Priority: -1
     - name: Add firefox apt-add-repository
-      become: true    
+      become: true
       apt_repository:
         repo: "{{ item.repo }}"
         state: "{{ item.state }}"
@@ -66,7 +78,7 @@
       with_items:
         - { state: "latest", name: "firefox" }
         - { state: "latest", name: "firefox-locale-en" }
-# Check if the following tasks is correct :
+# Update client APT to point to reposerver instead of online Ubuntu repo
     - name: Update /etc/apt/sources.list with reposerver
       become: true
       replace:
