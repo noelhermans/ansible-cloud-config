@@ -84,10 +84,10 @@
       replace:
         path: /etc/apt/sources.list
         regexp: '(\s+){{ source }}/ubuntu/?(\s+.*)?$'
-        replace: '\1{{ reposerver }}/ubuntu/archive.ubuntu.com/ubuntu \2'
+        replace: '\1{{ reposerver }}/ubuntu-prod \2'
     - name: Update security repos from /etc/apt/sources.list with reposerver
       become: true
       replace:
         path: /etc/apt/sources.list
         regexp: '(\s+){{ source_security }}/ubuntu/?(\s+.*)?$'
-        replace: '\1{{ reposerver }}/ubuntu/security.ubuntu.com/ubuntu \2'
+        replace: '\1{{ reposerver }}/ubuntu-prod \2'
