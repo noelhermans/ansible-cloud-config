@@ -2,4 +2,4 @@
 user: "devops"
 source: "http://archive.ubuntu.com"
 source_security: "http://security.ubuntu.com"
-reposerver: "http://192.168.154.202"
+reposerver: "http://192.168.150.202"
