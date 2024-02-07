@@ -103,6 +103,11 @@
         content: |
           user-db:user
           system-db:local
+    - name: ensures /etc/dconf/db/local.d dir exists
+      become: true
+      file: 
+        path: "/etc/dconf/db/local.d/"
+        state: directory
     - name: Gnome desktop settings
       become: true
       copy:
