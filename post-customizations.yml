@@ -78,6 +78,10 @@
       with_items:
         - { state: "latest", name: "firefox" }
         - { state: "latest", name: "firefox-locale-en" }
+        - { state: "latest", name: "libsecret-tools" }
+        - { state: "latest", name: "net-tools" }
+        - { state: "latest", name: "tree" }
+        - { state: "latest", name: "libpam-gnome-keyring" }
 # Update client APT to point to reposerver instead of online Ubuntu repo
     - name: Update /etc/apt/sources.list with reposerver
       become: true
@@ -91,3 +95,34 @@
         path: /etc/apt/sources.list
         regexp: '(\s+){{ source_security }}/ubuntu/?(\s+.*)?$'
         replace: '\1{{ reposerver }}/ubuntu-prod \2'
+# Gnome desktop settings
+    - name: Gnome desktop user profile enabling
+      become: true
+      copy:
+        dest: /etc/dconf/profile/user
+        content: |
+          user-db:user
+          system-db:local
+    - name: Gnome desktop settings
+      become: true
+      copy:
+        dest: /etc/dconf/db/local.d/01-gnome-settings
+        content: |
+          [org/gnome/desktop/remote-desktop/rdp]
+          screen-share-mode='extend'
+          view-only=false
+
+          [org/gnome/desktop/session]
+          idle-delay=0
+
+          [org/gnome/desktop/screensaver]
+          lock-enabled=false
+    - name: Update them via dconf
+      become: true     
+      ansible.builtin.command: dconf update
+      ignore_errors: true
+    - name: Set keyring password
+      become_user: devops
+      become: true  
+      ansible.builtin.command: echo -n "" | gnome-keyring-daemon –unlock
+      ignore_errors: true
