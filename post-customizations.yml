@@ -126,8 +126,8 @@
       become: true     
       ansible.builtin.command: dconf update
       ignore_errors: true
-    - name: Set keyring password
-      become_user: devops
-      become: true  
-      ansible.builtin.command: echo -n "" | gnome-keyring-daemon –unlock
-      ignore_errors: true
+    - name: Restore local desktop settings
+      become: true
+      ansible.builtin.unarchive:
+        src: settings.tgz
+        dest: /home
